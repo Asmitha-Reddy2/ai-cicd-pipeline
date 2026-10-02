@@ -1,0 +1,66 @@
+# Helm values for prometheus-community/kube-prometheus-stack, tuned down for
+# a laptop-sized Minikube cluster.
+#
+# Install:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm install monitoring prometheus-community/kube-prometheus-stack \
+#     -n monitoring --create-namespace \
+#     -f monitoring/kube-prometheus-stack-values.yaml
+
+grafana:
+  adminPassword: admin
+  # The stock default dashboards (cluster/node/pod overview boards) lean
+  # heavily on kube-state-metrics, which is disabled below — they'd just
+  # render empty panels. Our own dashboard (loaded via the sidecar) is the
+  # one that matters here.
+  defaultDashboardsEnabled: false
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: '1'
+  # The original 200m/256Mi limit was too tight: under real contention on a
+  # shared 3-CPU VM, Grafana got CPU-throttled hard enough that its own
+  # /api/health check returned 503, and periodically got killed by the
+  # liveness probe and restarted -- observed repeatedly, not a one-off.
+  # More tolerant probe timing alone (previous fix) wasn't enough; it needs
+  # actual headroom, which trimming alertmanager/node-exporter/
+  # kube-state-metrics below made room for.
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { cpu: 500m, memory: 384Mi }
+  livenessProbe:
+    initialDelaySeconds: 90
+    periodSeconds: 20
+    failureThreshold: 10
+  readinessProbe:
+    initialDelaySeconds: 90
+    periodSeconds: 20
+    failureThreshold: 10
+
+prometheus:
+  prometheusSpec:
+    retention: 3d
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    # Pick up ServiceMonitors from any namespace, not just `monitoring` —
+    # the app's ServiceMonitor lives alongside the app in pipeline-dev/prod.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+
+# Disabled: nothing in this project defines alert rules or consumes
+# host-level metrics or per-label pod metadata. Keeping these off saves a
+# real chunk of the ~3.7GB budget and, just as importantly, reduces the CPU
+# contention that was causing other pods' liveness probes to fail (see the
+# Grafana probe-timing fix above and the commit history). The core proof
+# this project cares about — Rollouts' canary analysis gated on
+# nginx_up via Prometheus — depends on none of these three.
+alertmanager:
+  enabled: false
+
+nodeExporter:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: false
