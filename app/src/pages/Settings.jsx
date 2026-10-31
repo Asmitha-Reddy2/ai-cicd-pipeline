@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTheme } from '../lib/useTheme'
 import Topbar from '../components/Topbar'
 import Toggle from '../components/Toggle'
-
+ 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme()
   const [notifications, setNotifications] = useState({
@@ -10,15 +10,15 @@ export default function Settings() {
     securityAlerts: true,
     weeklySummary: false,
   })
-
+ 
   function setNotification(key) {
     return (value) => setNotifications((prev) => ({ ...prev, [key]: value }))
   }
-
+ 
   return (
     <>
       <Topbar title="Settings" subtitle="Preferences for this dashboard" />
-
+ 
       <main className="flex-1 space-y-6 p-6">
         <div className="max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Appearance</h3>
@@ -31,7 +31,7 @@ export default function Settings() {
             />
           </div>
         </div>
-
+ 
         <div className="max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">
             Notifications
@@ -57,10 +57,10 @@ export default function Settings() {
             />
           </div>
         </div>
-
+ 
         <div className="max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Account</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">siri@amotion.ai</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">demo@example.com</p>
         </div>
       </main>
     </>
